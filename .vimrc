@@ -6,9 +6,17 @@
 "  n... :  where to save the viminfo files
 set viminfo='10,\"100,:20,%,n~/.viminfo
 
+" Remember last position
+if has("autocmd") 
+    au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif 
+    au FileType tex setlocal spell
+endif 
+
+set clipboard=unnamedplus
+
 syntax on
 set shiftwidth=4
 set expandtab
-autocmd FileType tex setlocal spell
 set backspace=indent,eol,start
 set ruler
+
