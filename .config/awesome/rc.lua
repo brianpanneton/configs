@@ -140,19 +140,24 @@ batterywidget:set_text(" | Battery | ")
 batterywidgettimer = timer({timeout=30})
 batterywidgettimer:connect_signal("timeout", 
     function()
-        fh = assert(io.popen("acpi | cut -d, -f 2 - | cut -d% -f 1 -", "r"))
-        bat = tonumber(fh:read("*line"))
-        if bat <= 5 then
-            bat = '| <span color="#FF0000">' .. bat .. '%</span> |'
+        fh = assert(io.popen("acpi", "r"))
+        acpi = fh:read("*line")
+        _, _, bat = string.find(acpi, ', (%d+)%%,') 
+        bat = tonumber(bat)
+        
+        if string.find(acpi, 'Charging') then
+            color = "0080FF"
+        elseif bat <= 5 then
+            color = "FF0000"
         elseif bat <= 10 then
-            bat = '| <span color="#FFA500">' .. bat .. '%</span> |'
+            color = "FFA500"
         elseif bat <= 20 then
-            bat = '| <span color="#FFFF00">' .. bat .. '%</span> |'
+            color = "FFFF00"
         elseif bat < 100 then
-            bat = '| <span color="#008000">' .. bat .. '%</span> |'
-        else
-            bat = "Unknown"
+            color = "008000"
         end
+
+        bat = '| <span color="#' .. color .. '">' .. bat .. '%</span> |'
         batterywidget:set_markup(bat)
         fh:close()
     end
