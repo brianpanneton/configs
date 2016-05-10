@@ -10,7 +10,7 @@ local beautiful = require("beautiful")
 -- Notification library
 local naughty = require("naughty")
 local menubar = require("menubar")
-local rodentbane = require("rerodentbane")
+local rerodentbane = require("rerodentbane")
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -134,6 +134,32 @@ menubar.utils.terminal = terminal -- Set the terminal for applications that requ
 -- Create a textclock widget
 mytextclock = awful.widget.textclock()
 
+-- {{{ Battery
+batterywidget = wibox.widget.textbox()
+batterywidget:set_text(" | Battery | ")
+batterywidgettimer = timer({timeout=30})
+batterywidgettimer:connect_signal("timeout", 
+    function()
+        fh = assert(io.popen("acpi | cut -d, -f 2 - | cut -d% -f 1 -", "r"))
+        bat = tonumber(fh:read("*line"))
+        if bat <= 5 then
+            bat = '| <span color="#FF0000">' .. bat .. '%</span> |'
+        elseif bat <= 10 then
+            bat = '| <span color="#FFA500">' .. bat .. '%</span> |'
+        elseif bat <= 20 then
+            bat = '| <span color="#FFFF00">' .. bat .. '%</span> |'
+        elseif bat < 100 then
+            bat = '| <span color="#008000">' .. bat .. '%</span> |'
+        else
+            bat = "Unknown"
+        end
+        batterywidget:set_markup(bat)
+        fh:close()
+    end
+)
+batterywidgettimer:start()
+-- }}}
+
 -- Create a wibox for each screen and add it
 mywibox = {}
 mypromptbox = {}
@@ -206,15 +232,16 @@ for s = 1, screen.count() do
 
     -- Widgets that are aligned to the left
     local left_layout = wibox.layout.fixed.horizontal()
-    left_layout:add(mylauncher)
-    left_layout:add(mytaglist[s])
+    -- left_layout:add(mylauncher)
+    -- left_layout:add(mytaglist[s])
     left_layout:add(mypromptbox[s])
 
     -- Widgets that are aligned to the right
     local right_layout = wibox.layout.fixed.horizontal()
     if s == 1 then right_layout:add(wibox.widget.systray()) end
+    right_layout:add(batterywidget)
     right_layout:add(mytextclock)
-    right_layout:add(mylayoutbox[s])
+    -- right_layout:add(mylayoutbox[s])
 
     -- Now bring it all together (with the tasklist in the middle)
     local layout = wibox.layout.align.horizontal()
