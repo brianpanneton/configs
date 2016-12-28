@@ -142,13 +142,14 @@ batterywidgettimer:connect_signal("timeout",
     function()
         fh = assert(io.popen("acpi", "r"))
         acpi = fh:read("*line")
-        _, _, bat = string.find(acpi, ', (%d+)%%,') 
+        _, _, bat = string.find(acpi, ', (%d+)%%') 
         bat = tonumber(bat)
-        
-        if string.find(acpi, 'Charging') then
+       
+        if string.find(acpi, 'Charging') or string.find(acpi, 'Full') then
             color = "0080FF"
         elseif bat <= 5 then
             color = "FF0000"
+            naughty.notify({ text="Battery Low: Plug In!"})
         elseif bat <= 10 then
             color = "FFA500"
         elseif bat <= 20 then
