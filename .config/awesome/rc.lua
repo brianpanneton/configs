@@ -10,7 +10,7 @@ local beautiful = require("beautiful")
 -- Notification library
 local naughty = require("naughty")
 local menubar = require("menubar")
-local rerodentbane = require("rerodentbane")
+local net_widgets = require("net_widgets")
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -39,7 +39,8 @@ end
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, font and wallpapers.
-beautiful.init("~/.config/awesome/themes/default/theme.lua")
+-- beautiful.init("~/.config/awesome/themes/default/theme.lua")
+beautiful.init("/usr/share/awesome/themes/default/theme.lua")
 
 -- This is used later as the default terminal and editor to run.
 terminal = "urxvt"
@@ -134,9 +135,14 @@ menubar.utils.terminal = terminal -- Set the terminal for applications that requ
 -- Create a textclock widget
 mytextclock = awful.widget.textclock()
 
+-- {{{ Bar
+barwidget = wibox.widget.textbox()
+barwidget:set_text(" | ")
+--}}}
+
 -- {{{ Battery
 batterywidget = wibox.widget.textbox()
-batterywidget:set_text(" | Battery | ")
+batterywidget:set_text("Battery")
 batterywidgettimer = timer({timeout=30})
 batterywidgettimer:connect_signal("timeout", 
     function()
@@ -158,12 +164,19 @@ batterywidgettimer:connect_signal("timeout",
             color = "008000"
         end
 
-        bat = '| <span color="#' .. color .. '">' .. bat .. '%</span> |'
+        bat = '<span color="#' .. color .. '">' .. bat .. '%</span>'
         batterywidget:set_markup(bat)
         fh:close()
     end
 )
 batterywidgettimer:start()
+-- }}}
+
+-- {{{ Network Widget
+net_wireless = net_widgets.wireless({interface="wlp3s0"})
+net_wired = net_widgets.indicator({
+    interfaces = {"eno1"}
+})
 -- }}}
 
 -- Create a wibox for each screen and add it
@@ -245,7 +258,12 @@ for s = 1, screen.count() do
     -- Widgets that are aligned to the right
     local right_layout = wibox.layout.fixed.horizontal()
     if s == 1 then right_layout:add(wibox.widget.systray()) end
+    right_layout:add(barwidget)
+    right_layout:add(net_wired)
+    right_layout:add(net_wireless)
+    right_layout:add(barwidget)
     right_layout:add(batterywidget)
+    right_layout:add(barwidget)
     right_layout:add(mytextclock)
     -- right_layout:add(mylayoutbox[s])
 
@@ -326,8 +344,16 @@ globalkeys = awful.util.table.join(
               end),
     -- Menubar
     awful.key({ modkey }, "p", function() menubar.show() end),
-    -- ReRodent
-    awful.key({ modkey }, "q", rerodentbane)
+
+    -- Restore All Minimized
+    awful.key({ modkey, "Shift" }, "n",
+        function()
+            local tag = awful.tag.selected()
+                for i=1, #tag:clients() do
+                    tag:clients()[i].minimized=false
+                    -- tag:clients()[i]:redraw()
+            end
+        end)
 )
 
 clientkeys = awful.util.table.join(
